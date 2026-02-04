@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Mint Whisper: #D1F2EB */
+    /* Emerald Green: #50C878 */
+    /* Royal Amethyst: #0B6E4F */
+    /* Dark Evergreen: #013220 */
+
+    --background: 0 0% 100%;
+    /* White */
+    --foreground: 160 30% 10%;
+    /* Very dark green/grey */
+
+    --card: 0 0% 100%;
+    --card-foreground: 160 30% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 30% 10%;
+
+    --primary: 140 52% 55%;
+    /* #50C878 Emerald Green */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 167 56% 88%;
+    /* #D1F2EB Mint Whisper */
+    --secondary-foreground: 154 98% 10%;
+    /* Dark Evergreen */
+
+    --muted: 167 30% 95%;
+    --muted-foreground: 160 10% 40%;
+
+    --accent: 161 80% 24%;
+    /* #0B6E4F Royal Amethyst (used as highlight/accent) */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 167 20% 90%;
+    --input: 167 20% 90%;
+    --ring: 140 52% 55%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 160 30% 10%;
+    /* Charcoal/Dark Evergreen mix */
+    --foreground: 167 56% 88%;
+    /* Mint Whisper text */
+
+    --card: 160 25% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 160 25% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 140 52% 55%;
+    /* Emerald Green */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 161 80% 24%;
+    /* Royal Amethyst (darker in dark mode?) or Dark Evergreen */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 160 20% 15%;
+    --muted-foreground: 160 10% 60%;
+
+    --accent: 140 52% 55%;
+    /* Make accent pop more in dark mode */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 160 20% 20%;
+    --input: 160 20% 20%;
+    --ring: 140 52% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
