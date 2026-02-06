@@ -18,6 +18,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { api } from "@/lib/axios"
+import { ThemeToggle } from "@/components/ThemeToggle"
+import { UserProfile } from "@/components/UserProfile"
 
 interface Board {
     id: string
@@ -62,39 +64,44 @@ export default function BoardsPage() {
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold tracking-tight">Your Boards</h1>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Create Board
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Create a new board</DialogTitle>
-                            <DialogDescription>
-                                Add a new board to your workspace.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">
-                                    Name
-                                </Label>
-                                <Input
-                                    id="name"
-                                    value={newBoardName}
-                                    onChange={(e) => setNewBoardName(e.target.value)}
-                                    className="col-span-3"
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button onClick={handleCreateBoard} disabled={createBoardMutation.isPending}>
-                                {createBoardMutation.isPending ? "Creating..." : "Create Board"}
+                <div className="flex items-center gap-2">
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" /> Create Board
                             </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Create a new board</DialogTitle>
+                                <DialogDescription>
+                                    Add a new board to your workspace.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="name" className="text-right">
+                                        Name
+                                    </Label>
+                                    <Input
+                                        id="name"
+                                        value={newBoardName}
+                                        onChange={(e) => setNewBoardName(e.target.value)}
+                                        className="col-span-3"
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={handleCreateBoard} disabled={createBoardMutation.isPending}>
+                                    {createBoardMutation.isPending ? "Creating..." : "Create Board"}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    <div className="h-6 w-px bg-border mx-1" />
+                    <ThemeToggle />
+                    <UserProfile />
+                </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

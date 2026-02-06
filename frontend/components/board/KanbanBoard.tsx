@@ -1,21 +1,15 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
     DndContext,
     DragOverlay,
-    defaultDropAnimationSideEffects,
     DragStartEvent,
     DragOverEvent,
     DragEndEvent,
     useSensor,
     useSensors,
     PointerSensor,
-    MeasureLayoutStrategies,
-    ClosestCorners,
-    pointerWithin,
-    rectIntersection,
-    getFirstCollision,
     closestCorners,
 } from "@dnd-kit/core"
 import { SortableContext, horizontalListSortingStrategy, arrayMove } from "@dnd-kit/sortable"
@@ -55,6 +49,10 @@ export function KanbanBoard({ initialBoard }: KanbanBoardProps) {
     const [activeColumn, setActiveColumn] = useState<Column | null>(null)
     const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
     const queryClient = useQueryClient()
+
+    useEffect(() => {
+        setColumns(initialBoard.columns)
+    }, [initialBoard])
 
     const columnIds = useMemo(() => columns.map((col) => col.id), [columns])
 
@@ -207,12 +205,15 @@ export function KanbanBoard({ initialBoard }: KanbanBoardProps) {
             }
 
             if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
-                const activeColumn = columns[activeColumnIndex]
                 const overColumn = columns[overColumnIndex]
-                const activeTicket = activeColumn.tickets.find(t => t.id === activeId)
+                // activeTicket is set on DragStart and holds the original state
+                const originalColumnId = activeTicket?.status_column_id
 
-                if (activeTicket && activeColumnIndex !== overColumnIndex) {
+                if (activeTicket && originalColumnId !== overColumn.id) {
                     // Changed Column - Call Backend
+                    // Also update the local ticket's status_column_id to prevent re-triggering if we were using it elsewhere
+                    // activeTicket.status_column_id = overColumn.id; // Not strictly needed as we reset activeTicket null right after
+
                     updateTicketMutation.mutate({
                         ticketId: activeTicket.id,
                         status_column_id: overColumn.id

@@ -44,3 +44,6 @@ class Board(BoardBase):
 
     class Config:
         from_attributes = True
+
+class BoardMemberAdd(BaseModel):
+    email: str

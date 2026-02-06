@@ -25,7 +25,17 @@ class CRUDTicket:
         return db_obj
         
     def update(self, db: Session, *, db_obj: Ticket, obj_in: TicketUpdate) -> Ticket:
+        print(f"DEBUG: update called for ticket {db_obj.id}")
+        print(f"DEBUG: obj_in: {obj_in}")
         update_data = obj_in.model_dump(exclude_unset=True)
+        print(f"DEBUG: update_data before map: {update_data}")
+        
+        # Map schema fields to model fields
+        if "status_column_id" in update_data:
+            update_data["column_id"] = update_data.pop("status_column_id")
+
+        print(f"DEBUG: update_data after map: {update_data}")
+
         for field in update_data:
             setattr(db_obj, field, update_data[field])
         db.add(db_obj)

@@ -16,11 +16,11 @@ def read_boards(
     """
     Retrieve boards.
     """
-    boards = crud.board.get_multi_by_owner(db=db, owner_id=current_user.id, skip=skip, limit=limit)
+    boards = crud.board.get_multi_for_user(db=db, user_id=str(current_user.id), skip=skip, limit=limit)
     return boards
 
 @router.get("/{id}", response_model=schemas.Board)
-def read_board(
+def get_board_by_id(
     *,
     db: Session = Depends(deps.get_db),
     id: str,
@@ -32,8 +32,17 @@ def read_board(
     board = crud.board.get(db=db, id=id)
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    if board.owner_id != current_user.id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+    
+    # Check if user is owner or member
+    is_owner = board.owner_id == current_user.id
+    is_member = db.query(models.BoardUser).filter(
+        models.BoardUser.board_id == id,
+        models.BoardUser.user_id == current_user.id
+    ).first() is not None
+    
+    if not (is_owner or is_member):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
     return board
 
 @router.post("/", response_model=schemas.Board)
@@ -44,9 +53,50 @@ def create_board(
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Create new board.
+    Create new board with default columns.
     """
     board = crud.board.create_with_owner(db=db, obj_in=board_in, owner_id=current_user.id)
+    
+    # Create default columns
+    default_columns = [
+        {"name": "Backlog", "order": 0},
+        {"name": "Ready for Dev", "order": 1},
+        {"name": "In Development", "order": 2},
+        {"name": "In QA", "order": 3},
+        {"name": "Done", "order": 4}
+    ]
+    
+    from app.models.board import Column
+    for col_data in default_columns:
+        column = Column(
+            board_id=board.id,
+            name=col_data["name"],
+            order=col_data["order"]
+        )
+        db.add(column)
+    
+    db.commit()
+    db.refresh(board)
+    
+    return board
+
+@router.put("/{id}", response_model=schemas.Board)
+def update_board(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: str,
+    board_in: schemas.BoardUpdate,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Update a board.
+    """
+    board = crud.board.get(db=db, id=id)
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    if board.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    board = crud.board.update(db=db, db_obj=board, obj_in=board_in)
     return board
 
 @router.delete("/{id}", response_model=schemas.Board)
@@ -63,6 +113,6 @@ def delete_board(
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
     if board.owner_id != current_user.id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     board = crud.board.remove(db=db, id=id)
     return board

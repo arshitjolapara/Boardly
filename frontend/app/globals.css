@@ -91,3 +91,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Toast notifications styling */
+@media (max-width: 640px) {
+  [data-sonner-toaster] [data-sonner-toast]:nth-child(n + 3) {
+    display: none !important;
+  }
+}

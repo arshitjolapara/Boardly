@@ -26,6 +26,7 @@ class TicketUpdate(BaseModel):
     priority: Optional[TicketPriority] = None
     status_column_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
+    created_by_id: Optional[UUID] = None
 
 class Ticket(TicketBase):
     id: UUID
@@ -33,6 +34,8 @@ class Ticket(TicketBase):
     column_id: UUID
     assignee_id: Optional[UUID] = None
     assignee: Optional[User] = None
+    created_by_id: Optional[UUID] = None
+    reporter: Optional[User] = None
     created_at: datetime
     updated_at: datetime
 
