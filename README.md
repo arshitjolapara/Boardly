@@ -9,6 +9,10 @@ Boardly is a modern, full-stack Kanban and issue tracking application built with
 - 🌓 **Themes**: Light and Dark mode support.
 - 🔐 **Authentication**: User accounts and secure access.
 - 👥 **Role-Based Access**: Permission handling for board owners and members.
+- 💬 **Comments**: Discuss tasks directly on tickets.
+- 📜 **Ticket History**: Detailed audit log of all changes made to a ticket.
+- 🔔 **Watchers & Notifications**: Subscribe to ticket updates and get notified of changes.
+- 👤 **User Profiles**: Manage your profile and settings.
 
 ---
 
@@ -117,17 +121,6 @@ Start the Development Server:
 npm run dev
 ```
 The application will be available at `http://localhost:3000`.
-
----
-
-## 🔮 Upcoming Features / Roadmap
-
-The following features are planned for future updates:
-
-- **💬 Comments**: Discuss tasks directly on tickets.
-- **📜 Ticket History Tracking**: View a detailed audit log of all changes made to a ticket.
-- **🔔 CC/Watchers & Notifications**: Subscribe to ticket updates and get notified of changes.
-- **👤 User Profile**: Enhanced profile page, settings, and activity overview (Coming Soon).
 
 ---
 
