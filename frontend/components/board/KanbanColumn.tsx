@@ -6,18 +6,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { Badge } from "@/components/ui/badge"
 import { KanbanTicket } from "./KanbanTicket"
 
-interface Ticket {
-    id: string
-    title: string
-    priority: "low" | "medium" | "high" | string
-    status_column_id: string
-}
-
-interface Column {
-    id: string
-    name: string
-    tickets: Ticket[]
-}
+import { Ticket, Column } from "./board.types"
 
 interface KanbanColumnProps {
     column: Column

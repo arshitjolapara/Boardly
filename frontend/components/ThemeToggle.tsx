@@ -3,6 +3,9 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { api } from "@/lib/api"
+import { ThemePreference } from "@/components/board/board.types"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,6 +17,24 @@ import {
 
 export function ThemeToggle() {
     const { setTheme } = useTheme()
+    const queryClient = useQueryClient()
+
+    const updatePrefs = useMutation({
+        mutationFn: async (theme: ThemePreference) => {
+            const res = await api.put('/users/me/preferences', { theme_preference: theme })
+            return res.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['user', 'preferences'] })
+        }
+    })
+
+    const handleThemeChange = (theme: string) => {
+        setTheme(theme)
+        if (typeof window !== 'undefined' && localStorage.getItem('token')) {
+            updatePrefs.mutate(theme as ThemePreference)
+        }
+    }
 
     return (
         <DropdownMenu>
@@ -25,13 +46,13 @@ export function ThemeToggle() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme("light")}>
+                <DropdownMenuItem onClick={() => handleThemeChange("light")}>
                     Light
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                <DropdownMenuItem onClick={() => handleThemeChange("dark")}>
                     Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
+                <DropdownMenuItem onClick={() => handleThemeChange("system")}>
                     System
                 </DropdownMenuItem>
             </DropdownMenuContent>

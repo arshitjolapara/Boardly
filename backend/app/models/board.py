@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
+from app.core.utils import utcnow
 from app.db.base import Base
 
 class Board(Base):
@@ -13,8 +14,8 @@ class Board(Base):
     description = Column(String, nullable=True)
     owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
     owner = relationship("User", backref="boards")
     columns = relationship("Column", back_populates="board", cascade="all, delete-orphan", order_by="Column.order")

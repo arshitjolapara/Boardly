@@ -16,6 +16,8 @@ class CRUDUser:
             email=obj_in.email,
             hashed_password=get_password_hash(obj_in.password),
             full_name=obj_in.full_name,
+            display_name=obj_in.display_name,
+            timezone=obj_in.timezone,
             avatar_url=obj_in.avatar_url,
             is_active=obj_in.is_active,
         )

@@ -39,5 +39,9 @@ class Ticket(TicketBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True,
+        "json_encoders": {
+            datetime: lambda v: v.isoformat() if v else None
+        }
+    }

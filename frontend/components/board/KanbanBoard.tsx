@@ -17,28 +17,9 @@ import { createPortal } from "react-dom"
 import { KanbanColumn } from "./KanbanColumn"
 import { KanbanTicket } from "./KanbanTicket"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { api } from "@/lib/axios"
+import { api } from "@/lib/api"
 
-interface Ticket {
-    id: string
-    title: string
-    priority: "low" | "medium" | "high" | string
-    status_column_id: string
-    board_id: string
-    description?: string
-}
-
-interface Column {
-    id: string
-    name: string
-    order: number
-    tickets: Ticket[]
-}
-
-interface Board {
-    id: string
-    columns: Column[]
-}
+import { Ticket, Column, Board } from "./board.types"
 
 interface KanbanBoardProps {
     initialBoard: Board

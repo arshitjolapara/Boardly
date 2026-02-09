@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { api } from "@/lib/axios"
+import { api } from "@/lib/api"
 import axios from "axios"
 
 export default function SignupPage() {
@@ -17,6 +17,12 @@ export default function SignupPage() {
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+
+    useEffect(() => {
+        if (localStorage.getItem("token")) {
+            router.push("/boards")
+        }
+    }, [router])
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault()

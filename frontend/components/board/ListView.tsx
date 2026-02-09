@@ -25,7 +25,9 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-function ListViewRow({ ticket }: { ticket: any }) {
+import { Board, Ticket } from "./board.types"
+
+function ListViewRow({ ticket }: { ticket: Ticket }) {
     const priorityColors: Record<string, string> = {
         low: "bg-blue-100 text-blue-800 hover:bg-blue-100",
         medium: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
@@ -41,6 +43,7 @@ function ListViewRow({ ticket }: { ticket: any }) {
                 </div>
             </TableCell>
             <TableCell>
+                {/* @ts-ignore - status is injected in flatMap */}
                 <Badge variant="outline">{ticket.status}</Badge>
             </TableCell>
             <TableCell>
@@ -64,7 +67,7 @@ function ListViewRow({ ticket }: { ticket: any }) {
                 </div>
             </TableCell>
             <TableCell className="text-right text-muted-foreground">
-                {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
+                {ticket.created_at && formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}
             </TableCell>
             <TableCell>
                 <TicketActionsMenu ticket={ticket} />
@@ -73,7 +76,7 @@ function ListViewRow({ ticket }: { ticket: any }) {
     )
 }
 
-export function ListView({ board }: { board: any }) {
+export function ListView({ board }: { board: Board }) {
     if (!board) return null
 
     const [searchQuery, setSearchQuery] = useState("")

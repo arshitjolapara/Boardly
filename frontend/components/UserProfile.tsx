@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery } from "@tanstack/react-query"
-import { api } from "@/lib/axios"
+import { api } from "@/lib/api"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -57,17 +57,17 @@ export function UserProfile() {
             <DropdownMenuContent align="end" className="w-56" forceMount>
                 <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.full_name}</p>
+                        <p className="text-sm font-medium leading-none">{user.display_name || user.full_name}</p>
                         <p className="text-xs leading-none text-muted-foreground">
                             {user.email}
                         </p>
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer" onClick={() => toast.info("🚧 Coming Soon", { description: "User Profile page is under construction" })}>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/profile")}>
                     Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => toast.info("🚧 Coming Soon", { description: "User Settings page is under construction" })}>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("/profile?tab=preferences")}>
                     Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

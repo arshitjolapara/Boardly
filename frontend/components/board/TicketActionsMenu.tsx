@@ -12,11 +12,13 @@ import {
 import { TicketEditDialog } from "./TicketEditDialog"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { api } from "@/lib/axios"
+import { api } from "@/lib/api"
 import { toast } from "sonner"
 
+import { Ticket } from "./board.types"
+
 interface TicketActionsMenuProps {
-    ticket: any
+    ticket: Ticket
     className?: string
 }
 

@@ -2,8 +2,15 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
 
 export default function Home() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("token"))
+  }, [])
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="px-6 h-16 flex items-center border-b">
@@ -11,12 +18,20 @@ export default function Home() {
           Boardly
         </div>
         <nav className="ml-auto flex gap-4">
-          <Link href="/auth/login">
-            <Button variant="ghost">Log in</Button>
-          </Link>
-          <Link href="/auth/signup">
-            <Button>Sign up</Button>
-          </Link>
+          {isLoggedIn ? (
+            <Link href="/boards">
+              <Button>Dashboard</Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/auth/login">
+                <Button variant="ghost">Log in</Button>
+              </Link>
+              <Link href="/auth/signup">
+                <Button>Sign up</Button>
+              </Link>
+            </>
+          )}
         </nav>
       </header>
 
@@ -30,16 +45,26 @@ export default function Home() {
             Organize tasks, track progress, and ship faster.
           </p>
           <div className="flex gap-4 justify-center pt-4">
-            <Link href="/auth/signup">
-              <Button size="lg" className="h-12 px-8 text-lg rounded-full">
-                Get Started
-              </Button>
-            </Link>
-            <Link href="/auth/login">
-              <Button size="lg" variant="outline" className="h-12 px-8 text-lg rounded-full">
-                Live Demo
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/boards">
+                <Button size="lg" className="h-12 px-8 text-lg rounded-full">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/auth/signup">
+                  <Button size="lg" className="h-12 px-8 text-lg rounded-full">
+                    Get Started
+                  </Button>
+                </Link>
+                <Link href="/auth/login">
+                  <Button size="lg" variant="outline" className="h-12 px-8 text-lg rounded-full">
+                    Live Demo
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

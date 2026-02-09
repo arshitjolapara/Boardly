@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Toaster } from "sonner"
 
 import { GoogleOAuthProvider } from "@react-oauth/google"
+import { ThemeSync } from "@/components/ThemeSync"
 
 const queryClient = new QueryClient()
 
@@ -14,6 +15,7 @@ export function Providers({ children, ...props }: React.ComponentProps<typeof Ne
         <QueryClientProvider client={queryClient}>
             <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "PLACEHOLDER_CLIENT_ID"}>
                 <NextThemesProvider {...props}>
+                    <ThemeSync />
                     {children}
                     <Toaster
                         position="top-right"

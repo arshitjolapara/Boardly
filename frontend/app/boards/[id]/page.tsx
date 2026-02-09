@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { UserProfile } from "@/components/UserProfile"
 import { toast } from "sonner"
-import { api } from "@/lib/axios"
+import { api } from "@/lib/api"
 import {
     Dialog,
     DialogContent,

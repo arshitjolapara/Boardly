@@ -7,30 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { TicketActionsMenu } from "./TicketActionsMenu"
 
-interface Ticket {
-    id: string
-    title: string
-    description?: string
-    priority: "low" | "medium" | "high" | string
-    board_id: string
-    status_column_id: string
-    assignee_id?: string | null
-    assignee?: {
-        id: string
-        email: string
-        full_name?: string
-        avatar_url?: string
-    }
-    reporter?: {
-        id: string
-        email: string
-        full_name?: string
-        avatar_url?: string
-    }
-    created_at?: string
-    // Auto-generated ID from backend usually UUID, but we might want a short ID if we had one. 
-    // For now we can use a slice of the ID.
-}
+import { Ticket } from "./board.types"
 
 interface KanbanTicketProps {
     ticket: Ticket
