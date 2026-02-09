@@ -12,6 +12,29 @@ Boardly is a modern, full-stack Kanban and issue tracking application built with
 
 ---
 
+## 📂 Project Architecture
+
+### 🛡️ Backend (FastAPI)
+The backend follows a modular structure focused on separation of concerns.
+
+- **`app/api/`**: API route definitions and endpoint logic. Handles incoming requests.
+- **`app/crud/`**: CRUD (Create, Read, Update, Delete) operations. Contains database-specific query logic.
+- **`app/models/`**: SQLAlchemy models defining the database schema and relationships.
+- **`app/schemas/`**: Pydantic models for data validation and serialization (request/response bodies).
+- **`app/core/`**: Core configuration including security, environment variables, and global constants.
+- **`app/db/`**: Database connection management and session handling.
+- **`alembic/`**: Database migration scripts for version-controlled schema changes.
+
+### 🎨 Frontend (Next.js)
+The frontend uses the Next.js App Router with TypeScript and Tailwind CSS.
+
+- **`app/`**: Route segments and page layouts. Uses React Server Components and Client Components appropriately.
+- **`components/`**: Reusable UI components, including specialized components for boards, tickets, and authentication.
+- **`lib/`**: Utility functions, API client wrappers, and shared constants.
+- **`public/`**: Static assets like images and global configuration files.
+
+---
+
 ## 🚀 Getting Started
 
 Follow these instructions to run the application locally on your machine.
