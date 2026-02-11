@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.api import deps
+from app.websockets import manager
 
 router = APIRouter()
 
@@ -81,7 +82,7 @@ def create_board(
     return board
 
 @router.put("/{id}", response_model=schemas.Board)
-def update_board(
+async def update_board(
     *,
     db: Session = Depends(deps.get_db),
     id: str,
@@ -97,10 +98,12 @@ def update_board(
     if board.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     board = crud.board.update(db=db, db_obj=board, obj_in=board_in)
+    # Broadcast to board
+    await manager.broadcast_to_board(str(board.id), {"type": "BOARD_UPDATED"})
     return board
 
 @router.delete("/{id}", response_model=schemas.Board)
-def delete_board(
+async def delete_board(
     *,
     db: Session = Depends(deps.get_db),
     id: str,
@@ -115,4 +118,6 @@ def delete_board(
     if board.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     board = crud.board.remove(db=db, id=id)
+    # Broadcast to board before connection is lost
+    await manager.broadcast_to_board(str(id), {"type": "BOARD_DELETED"})
     return board

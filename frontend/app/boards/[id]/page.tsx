@@ -1,33 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus, ArrowLeft, MoreVertical, Trash2, Pencil, Settings } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { KanbanBoard } from "@/components/board/KanbanBoard"
-import { BoardSettingsDialog } from "@/components/board/BoardSettingsDialog"
-import { ListView } from "@/components/board/ListView"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ThemeToggle } from "@/components/ThemeToggle"
-import { UserProfile } from "@/components/UserProfile"
-import { toast } from "sonner"
 import { api } from "@/lib/api"
+import { KanbanBoard } from "@/components/board/KanbanBoard"
+import { ListView } from "@/components/board/ListView"
+import { UserProfile } from "@/components/UserProfile"
+import { MobileNav } from "@/components/MobileNav"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+    Plus,
+    Settings,
+    Trash2,
+    Pencil,
+    Layout,
+    List as ListIcon
+} from "lucide-react"
+import { useState } from "react"
 import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogFooter,
 } from "@/components/ui/dialog"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,31 +37,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BoardSettingsDialog } from "@/components/board/BoardSettingsDialog"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
-
-interface Ticket {
-    id: string
-    title: string
-    description?: string
-    priority: "low" | "medium" | "high" | string
-    status_column_id: string
-    board_id: string
-}
-
-interface Column {
-    id: string
-    name: string
-    order: number
-    tickets: Ticket[]
-}
-
-interface BoardDetail {
-    id: string
-    name: string
-    columns: Column[]
-    updated_at: string
-    owner_id: string
-}
+import { toast } from "sonner"
+import { useWebSocket } from "@/hooks/useWebSocket"
 
 export default function BoardDetailPage() {
     const params = useParams()
@@ -70,31 +49,43 @@ export default function BoardDetailPage() {
     const queryClient = useQueryClient()
     const boardId = params.id as string
 
-    const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false)
-    const [viewMode, setViewMode] = useState("board")
+    const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
+    const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const [isDeleteBoardDialogOpen, setIsDeleteBoardDialogOpen] = useState(false)
-
     const [newTicket, setNewTicket] = useState({
         title: "",
         description: "",
         priority: "medium",
-        status_column_id: "",
-        assignee_id: "",
-        created_by_id: ""
+        status_column_id: ""
     })
 
-    // Fetch board members for assignee dropdown
-    const { data: members } = useQuery({
-        queryKey: ['board', boardId, 'members'],
+    // Real-time synchronization
+    useWebSocket(boardId, (message) => {
+        // We handle updates silently as requested
+        if (message.type === 'TICKET_CREATED' || message.type === 'TICKET_UPDATED' || message.type === 'TICKET_DELETED') {
+            queryClient.invalidateQueries({ queryKey: ['board', boardId] })
+        }
+        if (message.type === 'COMMENT_ADDED' || message.type === 'COMMENT_UPDATED' || message.type === 'COMMENT_DELETED') {
+            queryClient.invalidateQueries({ queryKey: ['ticket', message.ticket_id] })
+        }
+        if (message.type === 'BOARD_UPDATED') {
+            queryClient.invalidateQueries({ queryKey: ['board', boardId] })
+        }
+        if (message.type === 'BOARD_DELETED') {
+            router.push('/boards')
+            toast.error("This board has been deleted")
+        }
+    })
+
+    const { data: board, isLoading: isBoardLoading, error: boardError } = useQuery({
+        queryKey: ['board', boardId],
         queryFn: async () => {
-            const res = await api.get(`/boards/${boardId}/members`)
+            const res = await api.get(`/boards/${boardId}`)
             return res.data
-        },
-        enabled: isTicketDialogOpen
+        }
     })
 
-    // Fetch current user
     const { data: currentUser } = useQuery({
         queryKey: ['user', 'me'],
         queryFn: async () => {
@@ -103,56 +94,18 @@ export default function BoardDetailPage() {
         }
     })
 
-    // Default assignee and reporter to current user when dialog opens
-    useEffect(() => {
-        if (isTicketDialogOpen && currentUser) {
-            setNewTicket(prev => ({
-                ...prev,
-                assignee_id: prev.assignee_id || currentUser.id,
-                created_by_id: prev.created_by_id || currentUser.id
-            }))
-        }
-    }, [isTicketDialogOpen, currentUser])
-
-    // Reuse existing queries
-    const { data: board, isLoading } = useQuery<BoardDetail>({
-        queryKey: ['board', boardId],
-        queryFn: async () => {
-            const res = await api.get(`/boards/${boardId}`)
-            return res.data
-        }
-    })
-
     const createTicketMutation = useMutation({
-        mutationFn: async (ticketData: { title: string; description: string; priority: string; status_column_id: string; assignee_id?: string; created_by_id?: string }) => {
-            const payload: any = {
-                ...ticketData,
-                board_id: boardId
-            }
-            // Only include assignee_id if it's set
-            if (ticketData.assignee_id) {
-                payload.assignee_id = ticketData.assignee_id
-            }
-            if (ticketData.created_by_id) {
-                payload.created_by_id = ticketData.created_by_id
-            }
-            return await api.post("/tickets/", payload)
+        mutationFn: async (data: typeof newTicket) => {
+            return await api.post(`/boards/${boardId}/tickets`, data)
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['board', boardId] })
-            setIsTicketDialogOpen(false)
-            toast.success("✅ Ticket created successfully")
-            setNewTicket({
-                title: "",
-                description: "",
-                priority: "medium",
-                status_column_id: "",
-                assignee_id: currentUser?.id || "",
-                created_by_id: currentUser?.id || ""
-            })
+            setIsCreateTicketOpen(false)
+            setNewTicket({ title: "", description: "", priority: "medium", status_column_id: "" })
+            toast.success("Ticket created!")
         },
         onError: (error: any) => {
-            toast.error(`❌ ${error.response?.data?.detail || "Failed to create ticket"}`)
+            toast.error(error.response?.data?.detail || "Failed to create ticket")
         }
     })
 
@@ -161,141 +114,112 @@ export default function BoardDetailPage() {
             return await api.delete(`/boards/${boardId}`)
         },
         onSuccess: () => {
-            toast.error("🗑️ Board deleted", {
-                description: "The board and all its tickets have been permanently removed",
-                style: { background: "hsl(var(--destructive))", color: "hsl(var(--destructive-foreground))" }
-            })
             router.push('/boards')
+            toast.success("Board deleted successfully")
         }
     })
 
     const handleCreateTicket = () => {
-        // Validate all required fields
-        const missingFields: string[] = []
-
-        if (!newTicket.title.trim()) missingFields.push("Title")
-        if (!newTicket.description.trim()) missingFields.push("Description")
-        if (!newTicket.status_column_id) missingFields.push("Status")
-        if (!newTicket.assignee_id) missingFields.push("Assignee")
-
-        if (missingFields.length > 0) {
-            toast.error(`❌ Missing required fields`, {
-                description: `Please fill in: ${missingFields.join(", ")}`,
-                duration: 5000
-            })
+        if (!newTicket.title || !newTicket.status_column_id) {
+            toast.error("Please fill in the title and status")
             return
         }
-
         createTicketMutation.mutate(newTicket)
     }
 
-    if (isLoading) return <div className="flex justify-center p-10 h-screen items-center">Loading board...</div>
-    if (!board) return <div className="flex justify-center p-10 h-screen items-center">Board not found</div>
+    if (isBoardLoading) {
+        return (
+            <div className="flex flex-col h-screen">
+                <header className="border-b h-16 flex items-center px-6">
+                    <Skeleton className="h-8 w-48" />
+                </header>
+                <main className="flex-1 p-6 flex gap-6 overflow-hidden">
+                    <Skeleton className="h-full w-80" />
+                    <Skeleton className="h-full w-80" />
+                    <Skeleton className="h-full w-80" />
+                </main>
+            </div>
+        )
+    }
+
+    if (boardError || !board) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen space-y-4">
+                <h1 className="text-2xl font-bold">Board not found</h1>
+                <Button onClick={() => router.push('/boards')}>Back to Boards</Button>
+            </div>
+        )
+    }
 
     return (
-        <div className="h-screen flex flex-col bg-background">
-            <header className="border-b p-4 flex justify-between items-center bg-card shadow-sm z-10">
+        <div className="flex flex-col h-full bg-background overflow-hidden">
+            <header className="border-b h-16 flex items-center justify-between px-6 shrink-0 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => window.location.href = '/boards'}>
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                        {board.name}
-                    </h1>
-
-                    <Tabs value={viewMode} onValueChange={setViewMode} className="ml-4">
-                        <TabsList>
-                            <TabsTrigger value="board">Board</TabsTrigger>
-                            <TabsTrigger value="list">List</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                    <h1 className="text-xl font-bold tracking-tight">{board.name}</h1>
+                    <div className="hidden md:flex items-center bg-muted/40 rounded-lg p-1 gap-1">
+                        <Button
+                            variant={viewMode === 'board' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('board')}
+                            className="h-8 px-3 rounded-md transition-all sm:flex hidden"
+                        >
+                            <Layout className="h-4 w-4 mr-2" />
+                            Board
+                        </Button>
+                        <Button
+                            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('list')}
+                            className="h-8 px-3 rounded-md transition-all sm:flex hidden"
+                        >
+                            <ListIcon className="h-4 w-4 mr-2" />
+                            List
+                        </Button>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
+                <div className="flex items-center gap-3">
+                    <Dialog open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
                         <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" /> New Ticket
+                            <Button size="sm" className="gap-2 rounded-full px-5 h-9">
+                                <Plus className="h-4 w-4" />
+                                <span className="hidden sm:inline">New Ticket</span>
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-[500px]">
                             <DialogHeader>
-                                <DialogTitle>Create Ticket</DialogTitle>
-                                <DialogDescription>Add a task to your board.</DialogDescription>
+                                <DialogTitle className="text-xl font-bold">Create New Ticket</DialogTitle>
+                                <DialogDescription>
+                                    Add a new ticket to your board.
+                                </DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="title">
-                                        Title <span className="text-destructive">*</span>
-                                    </Label>
+                            <div className="grid gap-6 py-4">
+                                <div className="space-y-2">
+                                    <Label>Title <span className="text-destructive">*</span></Label>
                                     <Input
-                                        id="title"
                                         value={newTicket.title}
                                         onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
-                                        placeholder="Enter ticket title"
-                                        required
+                                        placeholder="What needs to be done?"
+                                        className="h-11"
                                     />
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="desc">
-                                        Description <span className="text-destructive">*</span>
-                                    </Label>
+                                <div className="space-y-2">
+                                    <Label>Description</Label>
                                     <Textarea
-                                        id="desc"
                                         value={newTicket.description}
                                         onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                                        placeholder="Enter ticket description"
-                                        required
+                                        placeholder="Add more details..."
+                                        className="min-h-[120px] resize-none"
                                     />
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label>
-                                        Assignee <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Select
-                                        value={newTicket.assignee_id}
-                                        onValueChange={(val) => setNewTicket({ ...newTicket, assignee_id: val })}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select assignee" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {members?.map((member: any) => (
-                                                <SelectItem key={member.id} value={member.id}>
-                                                    {member.full_name || member.email}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label>Reporter</Label>
-                                    <Select
-                                        value={newTicket.created_by_id}
-                                        onValueChange={(val) => setNewTicket({ ...newTicket, created_by_id: val })}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select reporter" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {members?.map((member: any) => (
-                                                <SelectItem key={member.id} value={member.id}>
-                                                    {member.full_name || member.email}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label>
-                                            Priority <span className="text-destructive">*</span>
-                                        </Label>
+                                    <div className="space-y-2">
+                                        <Label>Priority</Label>
                                         <Select
                                             value={newTicket.priority}
                                             onValueChange={(val) => setNewTicket({ ...newTicket, priority: val })}
                                         >
-                                            <SelectTrigger>
+                                            <SelectTrigger className="h-11">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -305,15 +229,13 @@ export default function BoardDetailPage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label>
-                                            Status <span className="text-destructive">*</span>
-                                        </Label>
+                                    <div className="space-y-2">
+                                        <Label>Status <span className="text-destructive">*</span></Label>
                                         <Select
                                             value={newTicket.status_column_id}
                                             onValueChange={(val) => setNewTicket({ ...newTicket, status_column_id: val })}
                                         >
-                                            <SelectTrigger>
+                                            <SelectTrigger className="h-11">
                                                 <SelectValue placeholder="Select column" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -326,7 +248,7 @@ export default function BoardDetailPage() {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button onClick={handleCreateTicket} disabled={createTicketMutation.isPending}>
+                                <Button onClick={handleCreateTicket} disabled={createTicketMutation.isPending} className="w-full sm:w-auto h-11 px-8 rounded-full">
                                     {createTicketMutation.isPending ? "Creating..." : "Create Ticket"}
                                 </Button>
                             </DialogFooter>
@@ -334,37 +256,26 @@ export default function BoardDetailPage() {
                     </Dialog>
 
                     {currentUser && currentUser.id === board.owner_id && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <MoreVertical className="h-5 w-5" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                                    <Settings className="mr-2 h-4 w-4" /> Settings
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setIsDeleteBoardDialogOpen(true)}>
-                                    <Trash2 className="mr-2 h-4 w-4" /> Board
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Settings onClick={() => setIsSettingsOpen(true)} className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
                     )}
 
-                    <div className="h-6 w-px bg-border mx-1" />
-                    <ThemeToggle />
                     <UserProfile />
-
+                    <div className="md:hidden">
+                        <MobileNav isLoggedIn={true} />
+                    </div>
                 </div>
             </header>
 
-
-            <main className="flex-1 overflow-auto bg-muted/10 p-4">
-                {viewMode === 'board' ? (
-                    <KanbanBoard initialBoard={board} key={board.updated_at ? String(board.updated_at) : 'board'} />
-                ) : (
-                    <ListView board={board} />
-                )}
+            <main className="flex-1 overflow-x-auto bg-muted/5 glass dark:glass-dark">
+                <div className="h-full">
+                    {viewMode === 'board' ? (
+                        <KanbanBoard initialBoard={board} key={board.updated_at ? String(board.updated_at) : 'board'} />
+                    ) : (
+                        <div className="container mx-auto p-4">
+                            <ListView board={board} />
+                        </div>
+                    )}
+                </div>
             </main>
 
             <BoardSettingsDialog
@@ -373,12 +284,11 @@ export default function BoardDetailPage() {
                 onClose={() => setIsSettingsOpen(false)}
             />
 
-            {/* Delete Board Confirmation */}
             <ConfirmationDialog
                 open={isDeleteBoardDialogOpen}
                 onOpenChange={setIsDeleteBoardDialogOpen}
                 title="Delete Board?"
-                description="This action cannot be undone. This will permanently delete your board and all associated tickets. Only the owner can delete the board."
+                description="This action cannot be undone. This will permanently delete your board and all associated tickets."
                 variant="destructive"
                 actionLabel="Delete"
                 onConfirm={() => deleteBoardMutation.mutate()}

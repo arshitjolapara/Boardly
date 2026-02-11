@@ -224,7 +224,7 @@ export function KanbanBoard({ initialBoard }: KanbanBoardProps) {
             onDragEnd={onDragEnd}
             collisionDetection={closestCorners}
         >
-            <div className="h-full flex gap-6 p-6 min-w-max">
+            <div className="h-full flex gap-8 p-8 min-w-max pb-20">
                 <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {columns.map((col) => (
                         <KanbanColumn key={col.id} column={col} />
@@ -234,12 +234,19 @@ export function KanbanBoard({ initialBoard }: KanbanBoardProps) {
 
             {/* Drag Overlay for smooth visuals */}
             {createPortal(
-                <DragOverlay>
+                <DragOverlay dropAnimation={{
+                    duration: 200,
+                    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+                }}>
                     {activeColumn && (
-                        <KanbanColumn column={activeColumn} />
+                        <div className="opacity-90 scale-105 transition-transform duration-200 shadow-2xl">
+                            <KanbanColumn column={activeColumn} />
+                        </div>
                     )}
                     {activeTicket && (
-                        <KanbanTicket ticket={activeTicket} />
+                        <div className="opacity-90 scale-105 transition-transform duration-200 shadow-2xl rotate-2">
+                            <KanbanTicket ticket={activeTicket} />
+                        </div>
                     )}
                 </DragOverlay>,
                 document.body

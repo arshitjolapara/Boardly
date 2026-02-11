@@ -33,3 +33,5 @@ class Ticket(Base):
     assignee = relationship("User", foreign_keys=[assignee_id], backref="assigned_tickets")
     reporter = relationship("User", foreign_keys=[created_by_id], backref="reported_tickets")
     comments = relationship("Comment", back_populates="ticket", cascade="all, delete-orphan")
+    history_logs = relationship("TicketHistory", back_populates="ticket", cascade="all, delete-orphan")
+    watchers = relationship("TicketWatcher", back_populates="ticket", cascade="all, delete-orphan")

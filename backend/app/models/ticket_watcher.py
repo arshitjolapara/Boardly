@@ -20,6 +20,6 @@ class TicketWatcher(Base):
     )
 
     # Relationships
-    ticket = relationship("Ticket", backref="watchers")
+    ticket = relationship("Ticket", back_populates="watchers")
     user = relationship("User", foreign_keys=[user_id])
     added_by_user = relationship("User", foreign_keys=[added_by])

@@ -33,5 +33,5 @@ class TicketHistory(Base):
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     # Relationships
-    ticket = relationship("Ticket", backref="history_logs")
+    ticket = relationship("Ticket", back_populates="history_logs")
     actor = relationship("User")

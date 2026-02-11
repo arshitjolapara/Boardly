@@ -27,17 +27,28 @@ api.interceptors.response.use(
         if (error.response) {
             const { status, data } = error.response;
 
-            // 401 Unauthorized - redirect to login
+            // 401 Unauthorized - Token expired or invalid
             if (status === 401) {
-                if (typeof window !== "undefined" && !window.location.pathname.includes("/auth")) {
-                    // Optional: trim duplicate toasts
-                    // toast.error("Session expired. Please login again.");
-                    // window.location.href = "/auth/login";
+                if (typeof window !== "undefined") {
+                    localStorage.removeItem("token");
+                    if (!window.location.pathname.includes("/auth")) {
+                        toast.error("Session expired. Please login again.");
+                        window.location.href = "/auth/login";
+                    }
                 }
             }
 
-            // 403 Forbidden - Permission denied
+            // 403 Forbidden - Permission denied OR Credential issues
             if (status === 403) {
+                // If the error message indicates a credential issue, treat it like a 401
+                if (data.detail === "Could not validate credentials") {
+                    if (typeof window !== "undefined") {
+                        localStorage.removeItem("token");
+                        window.location.href = "/auth/login";
+                    }
+                    return Promise.reject(error);
+                }
+
                 toast.error("⛔ Permission Denied", {
                     description: data.detail || "You do not have permission to perform this action.",
                     duration: 5000,

@@ -12,6 +12,7 @@ from app.api.deps import get_current_user
 from app.schemas.comment import CommentCreate, CommentUpdate, CommentResponse
 from app.models.history import TicketActionType
 from app.crud.history_log import log_ticket_history
+from app.websockets import manager
 
 router = APIRouter()
 
@@ -50,7 +51,7 @@ def read_comments(
     return comments
 
 @router.post("/tickets/{ticket_id}/comments", response_model=CommentResponse)
-def create_comment(
+async def create_comment(
     ticket_id: UUID,
     comment_in: CommentCreate,
     db: Session = Depends(get_db),
@@ -104,10 +105,13 @@ def create_comment(
     
     db.commit()
 
+    # Broadcast to board
+    await manager.broadcast_to_board(str(ticket.board_id), {"type": "COMMENT_ADDED", "ticket_id": str(ticket_id)})
+
     return comment
 
 @router.put("/comments/{comment_id}", response_model=CommentResponse)
-def update_comment(
+async def update_comment(
     comment_id: UUID,
     comment_in: CommentUpdate,
     db: Session = Depends(get_db),
@@ -130,28 +134,19 @@ def update_comment(
         )
         
     old_content = comment.content
+    board_id = str(comment.ticket.board_id)
     comment.content = comment_in.content
-    comment.is_edited = True
-    comment.updated_at = utcnow()
-    
-    db.add(comment)
-    
-    # Log history
-    log_ticket_history(
-        db=db,
-        ticket_id=comment.ticket_id,
-        actor_id=current_user.id,
-        action_type=TicketActionType.COMMENT_EDITED,
-        old_value=old_content,
-        new_value=comment_in.content
-    )
-    
+    ...
     db.commit()
     db.refresh(comment)
+
+    # Broadcast to board
+    await manager.broadcast_to_board(board_id, {"type": "COMMENT_UPDATED", "ticket_id": str(comment.ticket_id)})
+
     return comment
 
 @router.delete("/comments/{comment_id}")
-def delete_comment(
+async def delete_comment(
     comment_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -172,6 +167,9 @@ def delete_comment(
             detail="Not enough permissions to delete this comment"
         )
         
+    board_id = str(comment.ticket.board_id)
+    ticket_id = str(comment.ticket_id)
+    
     # Log history before deletion
     log_ticket_history(
         db=db,
@@ -183,4 +181,8 @@ def delete_comment(
     
     db.delete(comment)
     db.commit()
+
+    # Broadcast to board
+    await manager.broadcast_to_board(board_id, {"type": "COMMENT_DELETED", "ticket_id": ticket_id})
+
     return {"message": "Comment deleted successfully"}

@@ -5,11 +5,12 @@ from app import crud, models, schemas
 from app.api import deps
 from app.models import TicketHistory
 from app.schemas.history import TicketHistory as TicketHistorySchema
+from app.websockets import manager
 
 router = APIRouter()
 
 @router.post("/", response_model=schemas.Ticket)
-def create_ticket(
+async def create_ticket(
     *,
     db: Session = Depends(deps.get_db),
     ticket_in: schemas.TicketCreate,
@@ -42,10 +43,43 @@ def create_ticket(
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
+    # Broadcast to board - MUST AWAIT
+    await manager.broadcast_to_board(str(ticket.board_id), {"type": "TICKET_CREATED", "ticket_id": str(ticket.id)})
+    return ticket
+
+@router.get("/{id}", response_model=schemas.Ticket)
+def get_ticket(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: str,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get ticket by ID.
+    """
+    ticket = crud.ticket.get(db=db, id=id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    # Check permission - owner or member can view tickets
+    board = crud.board.get(db=db, id=str(ticket.board_id))
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+    
+    # Check if user is owner or member
+    is_owner = board.owner_id == current_user.id
+    is_member = db.query(models.BoardUser).filter(
+        models.BoardUser.board_id == str(ticket.board_id),
+        models.BoardUser.user_id == current_user.id
+    ).first() is not None
+    
+    if not (is_owner or is_member):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
     return ticket
 
 @router.put("/{id}", response_model=schemas.Ticket)
-def update_ticket(
+async def update_ticket(
     *,
     db: Session = Depends(deps.get_db),
     id: str,
@@ -75,10 +109,12 @@ def update_ticket(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     ticket = crud.ticket.update(db=db, db_obj=ticket, obj_in=ticket_in, actor_id=str(current_user.id))
+    # Broadcast to board
+    await manager.broadcast_to_board(str(ticket.board_id), {"type": "TICKET_UPDATED", "ticket_id": str(ticket.id)})
     return ticket
 
 @router.delete("/{id}", response_model=schemas.Ticket)
-def delete_ticket(
+async def delete_ticket(
     *,
     db: Session = Depends(deps.get_db),
     id: str,
@@ -110,6 +146,8 @@ def delete_ticket(
     _ = ticket.assignee  # This triggers the lazy load while still in session
     
     ticket = crud.ticket.remove(db=db, id=id, actor_id=str(current_user.id))
+    # Broadcast to board
+    await manager.broadcast_to_board(str(board.id), {"type": "TICKET_DELETED", "ticket_id": id})
     return ticket
 
 @router.get("/{ticket_id}/history", response_model=List[TicketHistorySchema])
