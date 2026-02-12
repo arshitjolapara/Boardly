@@ -5,8 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { KanbanBoard } from "@/components/board/KanbanBoard"
 import { ListView } from "@/components/board/ListView"
-import { UserProfile } from "@/components/UserProfile"
-import { MobileNav } from "@/components/MobileNav"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -96,7 +94,14 @@ export default function BoardDetailPage() {
 
     const createTicketMutation = useMutation({
         mutationFn: async (data: typeof newTicket) => {
-            return await api.post(`/boards/${boardId}/tickets`, data)
+            const payload = {
+                title: data.title,
+                description: data.description,
+                priority: data.priority,
+                status_column_id: data.status_column_id,
+                board_id: boardId
+            }
+            return await api.post("/tickets/", payload)
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['board', boardId] })
@@ -152,41 +157,42 @@ export default function BoardDetailPage() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-background overflow-hidden">
-            <header className="border-b h-16 flex items-center justify-between px-6 shrink-0 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-xl font-bold tracking-tight">{board.name}</h1>
-                    <div className="hidden md:flex items-center bg-muted/40 rounded-lg p-1 gap-1">
+        <div className="flex flex-col h-full bg-background overflow-hidden px-4 md:px-6">
+            {/* Board Sub-header / Actions */}
+            <div className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 transition-all border-b border-border/10 mb-2">
+                <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{board.name}</h1>
+                    <div className="hidden md:flex items-center bg-muted/30 rounded-full p-1 border border-border/30">
                         <Button
                             variant={viewMode === 'board' ? 'secondary' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('board')}
-                            className="h-8 px-3 rounded-md transition-all sm:flex hidden"
+                            className="h-7 px-4 rounded-full transition-all text-xs font-semibold"
                         >
-                            <Layout className="h-4 w-4 mr-2" />
+                            <Layout className="h-3.5 w-3.5 mr-1.5" />
                             Board
                         </Button>
                         <Button
                             variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('list')}
-                            className="h-8 px-3 rounded-md transition-all sm:flex hidden"
+                            className="h-7 px-4 rounded-full transition-all text-xs font-semibold"
                         >
-                            <ListIcon className="h-4 w-4 mr-2" />
+                            <ListIcon className="h-3.5 w-3.5 mr-1.5" />
                             List
                         </Button>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                     <Dialog open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
                         <DialogTrigger asChild>
-                            <Button size="sm" className="gap-2 rounded-full px-5 h-9">
+                            <Button size="sm" className="flex-1 sm:flex-none gap-2 rounded-full px-6 h-9 shadow-md shadow-primary/10 transition-all hover:shadow-primary/20 active:scale-95">
                                 <Plus className="h-4 w-4" />
-                                <span className="hidden sm:inline">New Ticket</span>
+                                <span>New Ticket</span>
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[500px]">
+                        <DialogContent className="sm:max-w-[500px] rounded-3xl">
                             <DialogHeader>
                                 <DialogTitle className="text-xl font-bold">Create New Ticket</DialogTitle>
                                 <DialogDescription>
@@ -200,7 +206,7 @@ export default function BoardDetailPage() {
                                         value={newTicket.title}
                                         onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
                                         placeholder="What needs to be done?"
-                                        className="h-11"
+                                        className="h-11 rounded-xl"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -209,7 +215,7 @@ export default function BoardDetailPage() {
                                         value={newTicket.description}
                                         onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                                         placeholder="Add more details..."
-                                        className="min-h-[120px] resize-none"
+                                        className="min-h-[120px] resize-none rounded-2xl"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -219,10 +225,10 @@ export default function BoardDetailPage() {
                                             value={newTicket.priority}
                                             onValueChange={(val) => setNewTicket({ ...newTicket, priority: val })}
                                         >
-                                            <SelectTrigger className="h-11">
+                                            <SelectTrigger className="h-11 rounded-xl">
                                                 <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent className="rounded-xl">
                                                 <SelectItem value="low">Low</SelectItem>
                                                 <SelectItem value="medium">Medium</SelectItem>
                                                 <SelectItem value="high">High</SelectItem>
@@ -235,11 +241,11 @@ export default function BoardDetailPage() {
                                             value={newTicket.status_column_id}
                                             onValueChange={(val) => setNewTicket({ ...newTicket, status_column_id: val })}
                                         >
-                                            <SelectTrigger className="h-11">
+                                            <SelectTrigger className="h-11 rounded-xl">
                                                 <SelectValue placeholder="Select column" />
                                             </SelectTrigger>
-                                            <SelectContent>
-                                                {board.columns.map(col => (
+                                            <SelectContent className="rounded-xl">
+                                                {board.columns.map((col: any) => (
                                                     <SelectItem key={col.id} value={col.id}>{col.name}</SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -256,15 +262,17 @@ export default function BoardDetailPage() {
                     </Dialog>
 
                     {currentUser && currentUser.id === board.owner_id && (
-                        <Settings onClick={() => setIsSettingsOpen(true)} className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIsSettingsOpen(true)}
+                            className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary transition-colors hover:bg-primary/10"
+                        >
+                            <Settings className="h-5 w-5" />
+                        </Button>
                     )}
-
-                    <UserProfile />
-                    <div className="md:hidden">
-                        <MobileNav isLoggedIn={true} />
-                    </div>
                 </div>
-            </header>
+            </div>
 
             <main className="flex-1 overflow-x-auto bg-muted/5 glass dark:glass-dark">
                 <div className="h-full">

@@ -18,8 +18,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { api } from "@/lib/api"
-import { ThemeToggle } from "@/components/ThemeToggle"
-import { UserProfile } from "@/components/UserProfile"
 
 interface Board {
     id: string
@@ -64,17 +62,17 @@ export default function BoardsPage() {
         <div className="container mx-auto px-4 py-8 md:py-12">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Your Boards</h1>
+                    <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl text-foreground">Your Boards</h1>
                     <p className="text-muted-foreground mt-1">Manage and organize your team workspaces.</p>
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button className="flex-1 md:flex-none h-11 rounded-full shadow-lg shadow-primary/20">
+                            <Button className="flex-1 md:flex-none h-11 rounded-full shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30 active:scale-95">
                                 <Plus className="mr-2 h-5 w-5" /> Create Board
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
+                        <DialogContent className="sm:max-w-[425px] rounded-3xl">
                             <DialogHeader>
                                 <DialogTitle className="text-2xl font-bold">New Workspace</DialogTitle>
                                 <DialogDescription>
@@ -89,22 +87,17 @@ export default function BoardsPage() {
                                         placeholder="e.g. Marketing Campaign"
                                         value={newBoardName}
                                         onChange={(e) => setNewBoardName(e.target.value)}
-                                        className="h-11"
+                                        className="h-11 rounded-xl"
                                     />
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button onClick={handleCreateBoard} disabled={createBoardMutation.isPending} className="w-full sm:w-auto h-11">
+                                <Button onClick={handleCreateBoard} disabled={createBoardMutation.isPending} className="w-full sm:w-auto h-11 rounded-full px-8">
                                     {createBoardMutation.isPending ? "Creating..." : "Create Board"}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                    <div className="hidden sm:flex items-center gap-2 ml-2">
-                        <div className="h-8 w-px bg-border mx-1" />
-                        <ThemeToggle />
-                        <UserProfile />
-                    </div>
                 </div>
             </div>
 

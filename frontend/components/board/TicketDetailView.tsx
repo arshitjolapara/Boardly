@@ -137,15 +137,15 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
     const isBoardOwner = currentUser?.id === board?.owner_id
 
     return (
-        <div className="flex flex-col h-full bg-background overflow-hidden lg:flex-row">
+        <div className="flex flex-col h-full bg-background overflow-y-auto lg:overflow-hidden lg:flex-row">
             {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto p-6 lg:p-10 border-r">
-                <div className="max-w-4xl mx-auto space-y-10">
+            <div className="flex-1 lg:overflow-y-auto p-4 sm:p-6 lg:p-10 border-b lg:border-b-0 lg:border-r">
+                <div className="max-w-4xl mx-auto space-y-6 lg:space-y-10">
                     {/* Breadcrumbs */}
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                    <div className="flex flex-wrap items-center gap-y-1 gap-x-2 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
                         <Link href="/boards" className="hover:text-primary transition-colors">Boards</Link>
                         <ChevronRight className="h-3 w-3" />
-                        <Link href={`/boards/${ticket.board_id}`} className="hover:text-primary transition-colors">{board?.name || "..."}</Link>
+                        <Link href={`/boards/${ticket.board_id}`} className="hover:text-primary transition-colors truncate max-w-[120px]">{board?.name || "..."}</Link>
                         <ChevronRight className="h-3 w-3" />
                         <span className="text-primary/70">TKT-{ticketId.slice(0, 4)}</span>
                     </div>
@@ -153,7 +153,7 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
                     {/* Title Section */}
                     <div className="space-y-4">
                         <Input
-                            className="text-3xl lg:text-4xl font-extrabold tracking-tight border-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent h-auto leading-tight"
+                            className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight border-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent h-auto leading-tight transition-all"
                             value={editTicket.title}
                             onChange={(e) => setEditTicket({ ...editTicket, title: e.target.value })}
                             onBlur={handleUpdateTicket}
@@ -163,43 +163,42 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
 
                     {/* Action Bar / Status */}
                     <div className="flex items-center gap-3 py-2 border-y border-border/50">
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-bold uppercase tracking-wider">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
                             <Clock className="h-3.5 w-3.5" />
                             {ticket.column?.name}
                         </div>
-                        {/* More actions could go here (e.g. status transition dropdown) */}
                     </div>
 
                     <Tabs defaultValue="details" className="w-full">
-                        <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 gap-8">
-                            <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-semibold tracking-tight uppercase">Description</TabsTrigger>
-                            <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-sm font-semibold tracking-tight uppercase">History</TabsTrigger>
+                        <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 gap-4 sm:gap-8 overflow-x-auto scrollbar-none">
+                            <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-[10px] sm:text-xs font-bold tracking-tight uppercase whitespace-nowrap">Description</TabsTrigger>
+                            <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3 text-[10px] sm:text-xs font-bold tracking-tight uppercase whitespace-nowrap">History</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="details" className="pt-8 space-y-12">
+                        <TabsContent value="details" className="pt-6 sm:pt-8 space-y-8 lg:space-y-12">
                             <div className="space-y-4 group">
                                 <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary transition-colors">Description</Label>
                                 <div className="relative">
                                     <Textarea
-                                        className="min-h-[250px] text-base leading-relaxed resize-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-muted/5 border-none p-4 rounded-2xl shadow-inner transition-all hover:bg-muted/10"
+                                        className="min-h-[200px] sm:min-h-[250px] text-sm sm:text-base leading-relaxed resize-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-muted/5 border-none p-4 rounded-xl sm:rounded-2xl shadow-inner transition-all hover:bg-muted/10"
                                         value={editTicket.description}
                                         onChange={(e) => setEditTicket({ ...editTicket, description: e.target.value })}
                                         onBlur={handleUpdateTicket}
                                         placeholder="Add a detailed description..."
                                     />
-                                    <div className="absolute top-4 right-4 text-[10px] text-muted-foreground/40 font-mono italic">
+                                    <div className="absolute top-4 right-4 text-[9px] sm:text-[10px] text-muted-foreground/40 font-mono italic">
                                         Last saved: {new Date(ticket.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="pt-12 border-t border-dashed">
-                                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground block mb-8">Activity & Discussion</Label>
+                            <div className="pt-8 sm:pt-12 border-t border-dashed">
+                                <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground block mb-6 sm:mb-8">Activity & Discussion</Label>
                                 <CommentSection ticketId={ticketId} currentUser={currentUser} />
                             </div>
                         </TabsContent>
 
-                        <TabsContent value="history" className="pt-8">
+                        <TabsContent value="history" className="pt-6 sm:pt-8">
                             <HistoryTab ticketId={ticketId} />
                         </TabsContent>
                     </Tabs>
@@ -207,13 +206,13 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
             </div>
 
             {/* Sidebar Metadata */}
-            <aside className="w-full lg:w-[360px] bg-muted/5 glass-dark p-6 lg:p-10 space-y-12 overflow-y-auto shrink-0">
+            <aside className="w-full lg:w-[360px] bg-muted/5 glass-dark p-6 sm:p-8 lg:p-10 space-y-10 lg:space-y-12 lg:overflow-y-auto shrink-0">
                 {/* Status/Priority Section */}
-                <div className="space-y-8">
-                    <div className="space-y-6">
-                        <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Details</Label>
+                <div className="space-y-6 sm:space-y-8">
+                    <div className="space-y-4 sm:space-y-6">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 text-foreground/70">Details</Label>
 
-                        <div className="grid gap-6">
+                        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-1 gap-6">
                             {/* Priority */}
                             <div className="flex flex-col gap-2">
                                 <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-2">
@@ -260,7 +259,7 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
                                                     <span className="w-4 h-4 rounded-full bg-primary/20 text-[8px] flex items-center justify-center font-bold">
                                                         {member.full_name?.[0] || member.email?.[0]}
                                                     </span>
-                                                    {member.full_name || member.email}
+                                                    <span className="truncate">{member.full_name || member.email}</span>
                                                 </div>
                                             </SelectItem>
                                         ))}
@@ -271,14 +270,14 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
                     </div>
 
                     {/* People Section */}
-                    <div className="space-y-6 pt-8 border-t border-border/50">
-                        <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">People</Label>
+                    <div className="space-y-4 pt-6 sm:pt-8 border-t border-border/50">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 text-foreground/70">People</Label>
                         <div className="space-y-4">
                             <div className="flex items-center justify-between group">
                                 <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">Reporter</span>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-semibold">{ticket.reporter?.full_name || ticket.reporter?.email}</span>
-                                    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] uppercase font-bold text-muted-foreground">
+                                    <span className="text-xs font-semibold truncate max-w-[150px]">{ticket.reporter?.full_name || ticket.reporter?.email}</span>
+                                    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] uppercase font-bold text-muted-foreground shrink-0 border border-border/30">
                                         {ticket.reporter?.full_name?.[0] || ticket.reporter?.email?.[0]}
                                     </div>
                                 </div>
@@ -287,14 +286,14 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
                     </div>
 
                     {/* Dates Section */}
-                    <div className="space-y-6 pt-8 border-t border-border/50">
-                        <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Dates</Label>
+                    <div className="space-y-4 sm:space-y-6 pt-6 sm:pt-8 border-t border-border/50">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 text-foreground/70">Dates</Label>
                         <div className="space-y-3">
                             <div className="flex items-center justify-between text-xs transition-colors hover:bg-muted/10 p-1 rounded-lg">
                                 <span className="text-muted-foreground flex items-center gap-2 italic">
                                     <Calendar className="h-3 w-3" /> Created
                                 </span>
-                                <span className="font-mono text-[11px] font-semibold text-primary/80">
+                                <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-primary/80">
                                     {new Date(ticket.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                             </div>
@@ -302,7 +301,7 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
                                 <span className="text-muted-foreground flex items-center gap-2 italic">
                                     <Clock className="h-3 w-3" /> Updated
                                 </span>
-                                <span className="font-mono text-[11px] font-semibold text-primary/80">
+                                <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-primary/80">
                                     {new Date(ticket.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                             </div>
@@ -310,8 +309,8 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
                     </div>
 
                     {/* Watchers Section */}
-                    <div className="space-y-6 pt-8 border-t border-border/50">
-                        <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Watchers</Label>
+                    <div className="space-y-4 sm:space-y-6 pt-6 sm:pt-8 border-t border-border/50">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 text-foreground/70">Watchers</Label>
                         {currentUser && (
                             <WatcherList
                                 ticketId={ticketId}
@@ -324,10 +323,10 @@ export function TicketDetailView({ ticketId, onClose }: TicketDetailViewProps) {
                 </div>
 
                 {onClose && (
-                    <div className="pt-12">
+                    <div className="pt-8 sm:pt-12">
                         <Button
                             variant="secondary"
-                            className="w-full text-[10px] font-black uppercase tracking-widest rounded-full py-6 h-auto transition-all hover:bg-destructive hover:text-destructive-foreground active:scale-95"
+                            className="w-full text-[10px] font-black uppercase tracking-widest rounded-full py-6 h-auto transition-all hover:bg-destructive hover:text-destructive-foreground active:scale-95 shadow-sm"
                             onClick={onClose}
                         >
                             Close View
